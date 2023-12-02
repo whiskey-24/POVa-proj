@@ -27,6 +27,7 @@ from os.path import join, exists, normpath, relpath
 
 # from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from pathos.multiprocessing import ProcessingPool
 
 
 # Ignore SSL certificate errors
@@ -371,6 +372,28 @@ class api:
                         if self.verbose:
                             print(e)
 
+    def get_tiles_with_range(self, centre_lat: float, centre_lon: float, x_range: int,
+                             y_range: int) -> list[list[int, int]]:
+        all_tiles = []
+        x_centre_tile, y_centre_tile = self.ret_xy_tiles(centre_lat, centre_lon)
+        for i in range(x_centre_tile - x_range, x_centre_tile + x_range + 1):
+            for j in range(y_centre_tile - y_range, y_centre_tile + y_range + 1):
+                all_tiles.append([i, j])
+        return all_tiles
+
+    def download_range(self, centre_lat: float, centre_lon: float, x_range: int,
+                       y_range: int):
+        self.current_imgs = []
+        all_tiles = self.get_tiles_with_range(centre_lat, centre_lon, x_range, y_range)
+
+        pool = ProcessingPool(self.locking_limit)
+        result = pool.amap(self.get_img, all_tiles)
+        result.get()
+        pool.close()
+
+        file_names = [join(self.container_dir, f"{x}_{y}.jpg") for x, y in all_tiles]
+        self.current_imgs.extend(file_names)
+
     def download(self, getMasks:bool= False, latLonResolution:float= 0.0005, **kwargs):
         """
         Downloads the tiles as initialized.
@@ -418,10 +441,6 @@ class api:
             #     # process has cleared. As a practical matter, this will
             #     # clear _several_ threads and keep up performance
             #     tp.join()
-
-        import multiprocessing as mp
-
-        from pathos.multiprocessing import ProcessingPool
 
         pool = ProcessingPool(self.locking_limit)
         result = pool.amap(self.get_img, URL_ALL)

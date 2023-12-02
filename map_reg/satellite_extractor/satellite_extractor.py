@@ -133,7 +133,7 @@ class SatelliteExtractor:
                            max_lat_deg=lat + radius,
                            min_lon_deg=lon - radius,
                            max_lon_deg=lon + radius,
-                           zoom=19,
+                           zoom=self.zoom,
                            verbose=False,
                            threads_=12,
                            container_dir=self.path_to_folder)
@@ -145,7 +145,30 @@ class SatelliteExtractor:
             downloaded_imgs = download_obj.current_imgs
             if len(downloaded_imgs) == 0:
                 print("No images were downloaded, retrying...")
-                return self.download_imgs(lat=lat, lon=lon, radius=radius, stitch=stitch)
+                return self.download_imgs(lat=lat, lon=lon, radius=radius,
+                                          stitch=stitch)
+            tiles = load_tiles(path_to_imgs=downloaded_imgs)
+            return stitch_tiles(tiles=tiles)
+
+    def download_img_range(self, lat: float, lon: float, x_range: int,
+                           y_range: int, stitch: bool = True) -> TiledImage | None:
+        download_obj = api(min_lat_deg=lat - y_range,
+                           max_lat_deg=lat + y_range,
+                           min_lon_deg=lon - x_range,
+                           max_lon_deg=lon + x_range,
+                           zoom=self.zoom,
+                           verbose=False,
+                           threads_=12,
+                           container_dir=self.path_to_folder)
+
+        download_obj.download_range(centre_lat=lat, centre_lon=lon,
+                                    x_range=x_range, y_range=y_range)
+        self.clean_chrome_tmp_folder()
+
+        if stitch:
+            downloaded_imgs = download_obj.current_imgs
+            if len(downloaded_imgs) == 0:
+                raise ValueError("No images were downloaded")
             tiles = load_tiles(path_to_imgs=downloaded_imgs)
             return stitch_tiles(tiles=tiles)
 
@@ -167,7 +190,10 @@ def click_on_img_lat_lon(event, x, y, flags, param):
 
 if __name__ == '__main__':
     sat_extractor = SatelliteExtractor()
-    out_img = sat_extractor.download_imgs(lat=49.22636409811254, lon=16.596097864144937, radius=0.0006)
+    out_img = sat_extractor.download_img_range(lat=48.37017393185813,
+                                               lon=17.494309514887174,
+                                               x_range=2, y_range=2,
+                                               stitch=True)
 
     img = out_img.stitch()
     cv2.namedWindow("img", cv2.WINDOW_NORMAL)
