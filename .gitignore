@@ -126,3 +126,8 @@ dmypy.json
 
 no-git/
 .idea/
+
+# Images
+*.jpg
+*.jpeg
+*.png
