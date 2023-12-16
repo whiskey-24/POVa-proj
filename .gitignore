@@ -131,3 +131,6 @@ no-git/
 *.jpg
 *.jpeg
 *.png
+*.info
+*.mp4
+map_reg/point_reg/imgs/*
