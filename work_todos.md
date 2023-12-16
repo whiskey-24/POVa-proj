@@ -36,9 +36,11 @@ Track Association: https://www.mdpi.com/2076-3417/11/9/4046
 ## Registration in map
 
 - [x] Download and run satellite images extractor
-- [ ] Evaluate registration based on SIFT/SURF
-- [ ] Evaluate registration based on SuperPoint/AdaLAM/SuperGlue
+- [x] Evaluate registration based on SIFT/SURF
+- [x] Evaluate registration based on SuperPoint/AdaLAM/SuperGlue
 - [x] Translate any point on source image to point on map (GPS coordinates)
+- [ ] FineTune SuperPoint/RANSAC
+- [ ] Add support for videos
 
 
 - [ ] Extract road network info from OpenStreetMap
