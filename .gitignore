@@ -127,3 +127,5 @@ dmypy.json
 no-git/
 .idea/
 detector/data/*
+runs/*
+detector/runs/*
