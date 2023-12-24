@@ -129,3 +129,5 @@ no-git/
 detector/data/*
 runs/*
 detector/runs/*
+detector/retinaface/Pytorch_Retinaface/weights/*
+*.zip

@@ -1,4 +1,4 @@
-path: data/20181029_D1_0900_0930/yolo  # dataset root dir
+path: ./data/20181029_D1_0900_0930/yolo  # dataset root dir
 train: train  # train images (relative to 'path')
 val: test  # val images (relative to 'path')
 test:  # test images (optional)
