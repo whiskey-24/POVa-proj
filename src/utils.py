@@ -110,6 +110,24 @@ def create_bbox_for_vehicles(vehicle_type, vehicle_img_coordinate, vehicle_direc
 
     return box
 
+def create_ltwh_for_vehicles(vehicle_type, vehicle_img_coordinate):
+
+    kernel_size = vehicle_bbox_info[vehicle_type][1]
+
+    # Calculate the half-width and half-height
+    half_width = kernel_size[0] / 2
+    half_height = kernel_size[1] / 2
+
+    # Calculate left, top, width, and height for the bounding box
+    left = vehicle_img_coordinate[0] - half_width
+    top = vehicle_img_coordinate[1] - half_height
+    width = kernel_size[0]
+    height = kernel_size[1]
+
+    # Create the bounding box in LTWH format
+    bbox = (left, top, width, height)
+
+    return bbox
 
 def load_dataset(dataset_path):
     subfolders = get_dataset_subfolders(dataset_path)
@@ -119,7 +137,7 @@ def load_dataset(dataset_path):
         annotations_folder = os.path.join(subfolder, "Annotations")
         gt_frames = pair_frames_and_annotations(frames_folder, annotations_folder)
 
-        for frame_file_name, annotation_file_name in gt_frames[190:290]:
+        for frame_file_name, annotation_file_name in gt_frames[:50]: 
             frame_path = os.path.join(frames_folder, frame_file_name)
             annotation_path = os.path.join(annotations_folder, annotation_file_name)
 
@@ -127,7 +145,7 @@ def load_dataset(dataset_path):
             df = pd.read_csv(annotation_path)
             
             df['bbox'] = df.apply(lambda row: create_bbox_for_vehicles(row['Type'], (row['x_img [px]'], row['y_img [px]']), np.radians(row['Angle_img [rad]'])), axis=1)
-
+            df['ltwh'] = df.apply(lambda row: create_ltwh_for_vehicles(row['Type'], (row['x_img [px]'], row['y_img [px]'])), axis=1)
             yield img, df
 
 
@@ -176,3 +194,109 @@ def create_video(frames, output_file='output.mp4', fps=20.0):
     out.release()
 
     print(f"Video saved as {output_file}")
+
+def create_feature_vector(vehicle_type, angle_rad):
+    vehicle_types = ['Car', 'Taxi', 'Bus', 'Medium Vehicle', 'Heavy Vehicle', 'Motorcycle']
+    type_vector = [1 if vehicle_type == vtype else 0 for vtype in vehicle_types]
+
+    # Normalize the angle
+    normalized_angle = angle_rad / (2 * np.pi)
+
+    # Combine into a single feature vector
+    feature_vector = type_vector + [normalized_angle]
+
+    return feature_vector
+
+
+def crop_frame_and_filter_vehicles(img, df, top, left, bottom, right):
+    """
+    Crops the frame and filters out vehicles not within the cropped area.
+
+    :param img: The original image frame.
+    :param df: DataFrame containing vehicle information and bounding boxes.
+    :param top: The top y-coordinate for cropping.
+    :param left: The left x-coordinate for cropping.
+    :param bottom: The bottom y-coordinate for cropping.
+    :param right: The right x-coordinate for cropping.
+    :return: Cropped image and filtered DataFrame.
+    """
+    # Crop the frame
+    cropped_img = img[top:bottom, left:right]
+
+    # Define a function to check if a vehicle is within the cropped area
+    def is_vehicle_within_cropped_area(row):
+        bbox = row['bbox']
+        bbox_center = bbox[0]
+        bbox_size = bbox[1]
+
+        # Calculate bbox corners
+        top_left_x = bbox_center[0] - bbox_size[0] / 2
+        top_left_y = bbox_center[1] - bbox_size[1] / 2
+        bottom_right_x = bbox_center[0] + bbox_size[0] / 2
+        bottom_right_y = bbox_center[1] + bbox_size[1] / 2
+
+        # Check if the vehicle is within the cropped area
+        return (left <= top_left_x <= right and top <= top_left_y <= bottom) or \
+               (left <= bottom_right_x <= right and top <= bottom_right_y <= bottom)
+
+    # Filter the DataFrame
+    filtered_df = df[df.apply(is_vehicle_within_cropped_area, axis=1)]
+
+    return cropped_img, filtered_df
+
+
+def evaluate_tracks(vehicle_tracks, vehicle_detections_gt, iou_threshold):
+    total_matches = 0
+    correct_matches = 0
+
+    # Assuming time keys are consistent in both vehicle_tracks and vehicle_detections_gt
+    time_keys = set()
+    for track in vehicle_tracks.values():
+        time_keys.update(track.trajectory.keys())
+    for detection in vehicle_detections_gt.values():
+        time_keys.update(detection.list_of_bboxes.keys())
+
+    # Iterate over each time frame
+    for time in time_keys:  
+        for track_id, track in vehicle_tracks.items():
+            if time in track.trajectory:
+                track_bbox = track.trajectory[time]
+                best_iou = 0
+                best_gt_id = None
+
+                for gt_id, detection in vehicle_detections_gt.items():
+                    if time in detection.list_of_bboxes:
+                        gt_bbox = detection.list_of_bboxes[time]
+                        iou = get_iou(track_bbox, gt_bbox)
+
+                        if iou > best_iou:
+                            best_iou = iou
+                            best_gt_id = gt_id
+
+                if best_iou > iou_threshold:
+                    total_matches += 1
+                    if track_id == best_gt_id:  # This logic might need adjustment
+                        correct_matches += 1
+
+    accuracy = correct_matches / total_matches if total_matches > 0 else 0
+    return accuracy
+
+
+
+def get_iou(bbox1, bbox2):
+    # Assuming bbox format is (x, y, width, height)
+    x1, y1, w1, h1 = bbox1
+    x2, y2, w2, h2 = bbox2
+
+    xi1 = max(x1, x2)
+    yi1 = max(y1, y2)
+    xi2 = min(x1 + w1, x2 + w2)
+    yi2 = min(y1 + h1, y2 + h2)
+    inter_area = max(xi2 - xi1, 0) * max(yi2 - yi1, 0)
+
+    bbox1_area = w1 * h1
+    bbox2_area = w2 * h2
+    union_area = bbox1_area + bbox2_area - inter_area
+
+    iou = inter_area / union_area if union_area != 0 else 0
+    return iou

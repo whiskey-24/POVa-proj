@@ -1,4 +1,3 @@
-from strong_sort import StrongSort
 import cv2
 import numpy as np
 

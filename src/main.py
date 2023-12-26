@@ -1,13 +1,14 @@
 from deep_sort_rt import run_deep_sort_rt
-#from deep_sort import run_deep_sort
-from utils import load_dataset,create_video
+from deep_sort import run_deep_sort
+from strong_sort import run_strong_sort
+from utils import load_dataset,create_video,evaluate_tracks
 from deep_sort_realtime.deepsort_tracker import DeepSort
-#from .. import deep_sort
-import os
+from deepsort import DeepSortTracker
+from strongsort import StrongSORT
 import cv2
 import matplotlib.pyplot as plt
 import argparse
-
+import os
 
 def main():
 
@@ -22,8 +23,51 @@ def main():
     dataset_path = os.path.join(parent_dir, "dataset")
 
     if args.version == 1:
-       
-        pass
+           
+        """
+        This is the multi-target tracker.
+
+        Parameters
+        ----------
+        metric : nn_matching.NearestNeighborDistanceMetric
+            A distance metric for measurement-to-track association.
+        max_age : int
+            Maximum number of missed misses before a track is deleted.
+        n_init : int
+            Number of consecutive detections before the track is confirmed. The
+            track state is set to `Deleted` if a miss occurs within the first
+            `n_init` frames.
+
+        Attributes
+        ----------
+        metric : nn_matching.NearestNeighborDistanceMetric
+            The distance metric used for measurement to track association.
+        max_age : int
+            Maximum number of missed misses before a track is deleted.
+        n_init : int
+            Number of frames that a track remains in initialization phase.
+        kf : kalman_filter.KalmanFilter
+            A Kalman filter to filter target trajectories in image space.
+        tracks : List[Track]
+            The list of active tracks at the current time step.
+
+        """
+        tracker = DeepSortTracker(metric_name="euclidean", max_iou_distance=0.4, max_age=40, n_init=3, max_dist=0.3, nn_budget=200)
+        #tracker = DeepSortTracker()
+        processed_frames = []
+        for frame, annotation in load_dataset(dataset_path):
+            subset = annotation[annotation['ID'] > 100]
+            sub = subset[subset['ID'] < 200]
+            cars = annotation[annotation['Type'] == 'Car']
+            processed_frame = run_deep_sort(tracker, frame, annotation)
+            processed_frames.append(processed_frame)
+            '''
+            cv2.imshow('Frame', processed_frame)
+
+            if cv2.waitKey(0) & 0xFF == ord('q'):
+                break'''
+        create_video(processed_frames, output_file='deep_sort.mp4', fps=5.0)
+        #cv2.destroyAllWindows()
 
 
     elif args.version == 2:
@@ -88,12 +132,14 @@ def main():
         """
 
         processed_frames = []
+        vehicle_tracks = {}
+        vehicle_detections_gt = {}
         for frame, annotation in load_dataset(dataset_path):
 
-            subset = annotation[annotation['ID'] > 100]
-            sub = subset[subset['ID'] < 200]
+            subset = annotation[annotation['ID'] > 0]
+            sub = subset[subset['ID'] < 31]
             cars = annotation[annotation['Type'] == 'Car']
-            processed_frame = run_deep_sort_rt(tracker, frame, cars)
+            processed_frame = run_deep_sort_rt(tracker, frame, sub, vehicle_tracks, vehicle_detections_gt)
             processed_frames.append(processed_frame)
             '''
             cv2.imshow('Frame', processed_frame)
@@ -101,15 +147,39 @@ def main():
             if cv2.waitKey(0) & 0xFF == ord('q'):
                 break'''
         create_video(processed_frames, output_file='deep_sort_rt.mp4', fps=5.0)
+        #generate a text file with the tracks
+
+        with open('tracks.txt', 'w') as f:
+            for key in vehicle_tracks.keys():
+                f.write("%s\n" % vehicle_tracks[key].type)
+                f.write("%s\n" % vehicle_tracks[key].trajectory)
+                f.write("%s\n" % vehicle_tracks[key].id)
+                f.write("%s\n" % vehicle_tracks[key].original_ltwh)
+                f.write("---------------------------------\n")
+
+        f.close()
+
+        with open('detections.txt', 'w') as f:
+            for key in vehicle_detections_gt.keys():
+                f.write("%s\n" % vehicle_detections_gt[key].type)
+                f.write("%s\n" % vehicle_detections_gt[key].list_of_bboxes)
+                f.write("%s\n" % vehicle_detections_gt[key].id)
+                f.write("---------------------------------\n")
+
+        #evaluate the tracks
+        acc = evaluate_tracks(vehicle_tracks, vehicle_detections_gt, 0.5)
+        print("Accuracy:", acc)
         #cv2.destroyAllWindows()
     elif args.version == 3:
 
         processed_frames = []
         for frame, annotation in load_dataset(dataset_path):
-            for bbox, id in zip(annotation['bbox'], annotation['ID']):
-
-                cv2.rectangle(frame, (bbox[0], bbox[3]), (bbox[2], bbox[1]), (255, 255, 0), 2)
-                cv2.putText(frame, str(id), (int(bbox[2]), int(bbox[1])), 0, 5e-3 * 200, (255, 0, 255), 2)
+            for bbox, id in zip(annotation['ltwh'], annotation['ID']):
+                left, top, width, height = bbox[0], bbox[1], bbox[2], bbox[3]
+                right = left + width
+                bottom = top + height
+                cv2.rectangle(frame, (int(left), int(top)), (int(right), int(bottom)), (255, 255, 0), 2)
+                cv2.putText(frame, str(id), (int(left), int(top)), 0, 5e-3 * 200, (255, 0, 255), 2)
 
                 '''
                 #cv2.imshow('Frame', frame)
