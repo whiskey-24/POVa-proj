@@ -127,10 +127,22 @@ dmypy.json
 no-git/
 .idea/
 
+map_reg/point_reg/imgs/*
+
+detector/data/*
+runs/*
+detector/runs/*
+detector/retinaface/Pytorch_Retinaface/weights/*
+*.zip
+detector/yolov5/*
+detector/retinanet/*
+
 # Images
 *.jpg
 *.jpeg
 *.png
-*.info
 *.mp4
-map_reg/point_reg/imgs/*
+
+*.info
+*.txt
+
