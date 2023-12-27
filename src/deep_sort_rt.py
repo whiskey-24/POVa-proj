@@ -39,8 +39,8 @@ def run_deep_sort_rt(tracker, frame, annotation, vehicle_tracks, vehicle_detecti
     tracks = tracker.update_tracks(detections, frame=frame_rgb)
 
     for track in tracks:
-        #if not track.is_confirmed() or track.is_tentative() or track.time_since_update > 3:
-        #    continue  #skip unconfirmed or lost tracks
+        #if not track.is_confirmed() or track.time_since_update > 1: #or track.is_tentative()
+            #continue  skip unconfirmed or lost tracks
            
         ltwh = track.to_ltwh()
 

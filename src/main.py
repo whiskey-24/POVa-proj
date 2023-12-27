@@ -76,7 +76,7 @@ def main():
         max_iou_distance=0.4,    #adjusted for similarity in vehicle shapes/sizes
         max_age=40,              #slightly higher to account for potential occlusions
         n_init=3,                #standard initialization phase length
-        nms_max_overlap=0.9,     #higher as overlap is less likely in aerial views
+        nms_max_overlap=0.8,     #higher as overlap is less likely in aerial views
         max_cosine_distance=0.3, #balancing appearance variations
         nn_budget=200,           #if computational resources allow, for better accuracy
         gating_only_position=True, #considering only position for aerial tracking
@@ -87,10 +87,9 @@ def main():
         embedder_gpu=True,       #utilize GPU for embedder
         embedder_model_name=None, #default setting for MobileNet
         embedder_wts=None,       #default weights
-        polygon=True,            #if bboxes are oriented
         today=None               #default setting
     )
-        tracker = DeepSort()
+        #tracker = DeepSort()
         """
 
         Parameters
@@ -139,7 +138,7 @@ def main():
             subset = annotation[annotation['ID'] > 0]
             sub = subset[subset['ID'] < 31]
             cars = annotation[annotation['Type'] == 'Car']
-            processed_frame = run_deep_sort_rt(tracker, frame, sub, vehicle_tracks, vehicle_detections_gt)
+            processed_frame = run_deep_sort_rt(tracker, frame, annotation, vehicle_tracks, vehicle_detections_gt)
             processed_frames.append(processed_frame)
             '''
             cv2.imshow('Frame', processed_frame)
@@ -167,7 +166,7 @@ def main():
                 f.write("---------------------------------\n")
 
         #evaluate the tracks
-        acc = evaluate_tracks(vehicle_tracks, vehicle_detections_gt, 0.5)
+        acc = evaluate_tracks(vehicle_tracks, vehicle_detections_gt, 0.7)
         print("Accuracy:", acc)
         #cv2.destroyAllWindows()
     elif args.version == 3:

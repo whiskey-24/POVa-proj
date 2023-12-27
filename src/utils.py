@@ -246,10 +246,10 @@ def crop_frame_and_filter_vehicles(img, df, top, left, bottom, right):
 
 
 def evaluate_tracks(vehicle_tracks, vehicle_detections_gt, iou_threshold):
-    total_matches = 0
-    correct_matches = 0
+    total_matched_bboxes = 0
+    iou_sum = 0
 
-    # Assuming time keys are consistent in both vehicle_tracks and vehicle_detections_gt
+    # Collect all time keys
     time_keys = set()
     for track in vehicle_tracks.values():
         time_keys.update(track.trajectory.keys())
@@ -258,28 +258,33 @@ def evaluate_tracks(vehicle_tracks, vehicle_detections_gt, iou_threshold):
 
     # Iterate over each time frame
     for time in time_keys:  
+        matched_pairs = []  # To store matched track-detection pairs for this time frame
+
         for track_id, track in vehicle_tracks.items():
             if time in track.trajectory:
                 track_bbox = track.trajectory[time]
                 best_iou = 0
-                best_gt_id = None
+                best_gt_bbox = None
 
-                for gt_id, detection in vehicle_detections_gt.items():
+                for detection in vehicle_detections_gt.values():
                     if time in detection.list_of_bboxes:
                         gt_bbox = detection.list_of_bboxes[time]
                         iou = get_iou(track_bbox, gt_bbox)
 
                         if iou > best_iou:
                             best_iou = iou
-                            best_gt_id = gt_id
+                            best_gt_bbox = gt_bbox
 
                 if best_iou > iou_threshold:
-                    total_matches += 1
-                    if track_id == best_gt_id:  # This logic might need adjustment
-                        correct_matches += 1
+                    matched_pairs.append((track_bbox, best_gt_bbox))
+                    iou_sum += best_iou
 
-    accuracy = correct_matches / total_matches if total_matches > 0 else 0
-    return accuracy
+        total_matched_bboxes += len(matched_pairs)
+
+    # Calculate average IoU across all matched pairs
+    average_iou = iou_sum / total_matched_bboxes if total_matched_bboxes > 0 else 0
+    return average_iou
+
 
 
 
