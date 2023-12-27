@@ -11,22 +11,22 @@ def mouse_callback(event, x, y, flags, param):
         print(f"({x}, {y})")
 
 
-dataset_config = {
-    "path_to_dataset": "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/20181029_D1_0900_0930/20181029_D1_0900_0930",
-    "crop_bboxes": [
-        [(9, 879),
-         (1813, 1267)],
-        [(1923, 935),
-         (3752, 1220)],
-        [(1751, 1167),
-         (1985, 2074)],
-        [(1757, 15),
-         (1970, 985)]],
-    "output_path": "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/retinaface/images",
-    "dateset_id": 1}
+# dataset_config = {
+#     "path_to_dataset": "data/20181029_D1_0900_0930/",
+#     "crop_bboxes": [
+#         [(9, 879),
+#          (1813, 1267)],
+#         [(1923, 935),
+#          (3752, 1220)],
+#         [(1751, 1167),
+#          (1985, 2074)],
+#         [(1757, 15),
+#          (1970, 985)]],
+#     "output_path": "data/retinaface/images",
+#     "dateset_id": 1}
 
 # dataset_config = {
-#     "path_to_dataset": "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/20181029_D10_0900_0930",
+#     "path_to_dataset": "data/20181029_D10_0900_0930",
 #     "crop_bboxes": [[(2154, 1385),
 #                      (3200, 1709)],
 #                     [(2450, 692),
@@ -34,8 +34,43 @@ dataset_config = {
 #                     [(3306, 1014),
 #                      (4080, 1450)]
 #                     ],
-#     "output_path": "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/retinaface/images",
+#     "output_path": "data/retinaface/images",
 #     "dateset_id": 10}
+
+dataset_config = {
+    "path_to_dataset": "data/20181029_D9_0900_0930",
+    "crop_bboxes": [[(1514, 622),
+                     (2350, 1311)],
+                    [(616, 0),
+                     (1542, 610)],
+                    [(913, 1254),
+                     (1668, 2009)],
+                    [(2137, 1183),
+                     (2685, 1718)]],
+    "output_path": "data/retinaface2/images",
+    "dateset_id": 9}
+
+
+def sanity_rectangle():
+    cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("test", 640, 480)
+    cv2.setMouseCallback("test", mouse_callback)
+
+    path_to_imgs = Path(dataset_config["path_to_dataset"]) / "Frames"
+    all_imgs = glob(str(path_to_imgs / "*.jpg"))
+    all_imgs.sort()
+
+    img_to_draw = cv2.imread(all_imgs[0])
+    for bbox in dataset_config["crop_bboxes"]:
+        cv2.rectangle(img_to_draw, bbox[0], bbox[1], (0, 0, 255), 2)
+
+    cv2.imshow("test", img_to_draw)
+    while True:
+        key = cv2.waitKey(0)
+        if key == ord("q"):
+            exit(0)
+        elif key == ord("n"):
+            break
 
 
 def sanity_check(path_to_labels: str):
@@ -64,11 +99,12 @@ def sanity_check(path_to_labels: str):
                        (0, 255, 255), (255, 255, 255)]
         for annotation in annotations:
             cv2.rectangle(img, (int(annotation[0]), int(annotation[1])),
-                            (int(annotation[0] + annotation[2]), int(annotation[1] + annotation[3])),
-                            (0, 0, 255), 2)
+                          (int(annotation[0] + annotation[2]),
+                           int(annotation[1] + annotation[3])),
+                          (0, 0, 255), 2)
             cv2.line(img, (int(annotation[4]), int(annotation[5])),
-                        (int(annotation[7]), int(annotation[8])),
-                        (0, 255, 0), 2)
+                     (int(annotation[7]), int(annotation[8])),
+                     (0, 255, 0), 2)
             cv2.line(img, (int(annotation[7]), int(annotation[8])),
                      (int(annotation[10]), int(annotation[11])),
                      (0, 255, 0), 2)
@@ -78,11 +114,16 @@ def sanity_check(path_to_labels: str):
             cv2.line(img, (int(annotation[13]), int(annotation[14])),
                      (int(annotation[4]), int(annotation[5])),
                      (0, 255, 0), 2)
-            cv2.circle(img, (int(annotation[4]), int(annotation[5])), 2, lndmrk_clrs[0], 2)
-            cv2.circle(img, (int(annotation[7]), int(annotation[8])), 2, lndmrk_clrs[1], 2)
-            cv2.circle(img, (int(annotation[10]), int(annotation[11])), 2, lndmrk_clrs[2], 2)
-            cv2.circle(img, (int(annotation[13]), int(annotation[14])), 2, lndmrk_clrs[3], 2)
-            cv2.circle(img, (int(annotation[16]), int(annotation[17])), 2, lndmrk_clrs[4], 2)
+            cv2.circle(img, (int(annotation[4]), int(annotation[5])), 2,
+                       lndmrk_clrs[0], 2)
+            cv2.circle(img, (int(annotation[7]), int(annotation[8])), 2,
+                       lndmrk_clrs[1], 2)
+            cv2.circle(img, (int(annotation[10]), int(annotation[11])), 2,
+                       lndmrk_clrs[2], 2)
+            cv2.circle(img, (int(annotation[13]), int(annotation[14])), 2,
+                       lndmrk_clrs[3], 2)
+            cv2.circle(img, (int(annotation[16]), int(annotation[17])), 2,
+                       lndmrk_clrs[4], 2)
         cv2.imshow("test", img)
         while True:
             key = cv2.waitKey(0)
@@ -93,10 +134,14 @@ def sanity_check(path_to_labels: str):
 
 
 if __name__ == "__main__":
+    # sanity_rectangle()
     # sanity_check("data/retinaface/label.txt")
+    print(f"Creating dataset from {dataset_config}...")
     path_to_dataset = dataset_config["path_to_dataset"]
     path_to_frames = Path(path_to_dataset) / "Frames"
     path_to_annot = Path(path_to_dataset) / "Annotations"
+    print(f"Creating output directory {dataset_config['output_path']}...\n")
+    Path(dataset_config["output_path"]).mkdir(parents=True, exist_ok=True)
 
     all_frames = glob(str(path_to_frames / "*.jpg"))
     # Remove all paths that have underscore in the filename
@@ -217,7 +262,8 @@ if __name__ == "__main__":
 
     final_line = "\n".join(out_lines)
     label_file = Path(dataset_config["output_path"]).parent / "label.txt"
+    if label_file.exists():
+        final_line = "\n" + final_line
     with open(label_file, "a") as f:
-        if label_file.exists():
-            f.write("\n")
         f.write(final_line)
+    print("\nDone!")
