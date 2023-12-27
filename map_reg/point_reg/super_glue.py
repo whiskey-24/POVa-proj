@@ -4,8 +4,8 @@ import matplotlib.cm as cm
 import torch
 from pathlib import Path
 
-from SuperGlueModel.models.matching import Matching
-from SuperGlueModel.models.utils import read_image, make_matching_plot_fast
+from map_reg.point_reg.SuperGlueModel.models.matching import Matching
+from map_reg.point_reg.SuperGlueModel.models.utils import read_image, make_matching_plot_fast
 
 torch.set_grad_enabled(False)
 
