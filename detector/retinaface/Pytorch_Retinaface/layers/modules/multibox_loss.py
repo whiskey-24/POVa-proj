@@ -41,7 +41,7 @@ class MultiBoxLoss(nn.Module):
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
 
-    def forward(self, predictions, priors, targets):
+    def forward(self, predictions, priors, targets, device_corr):
         """Multibox Loss
         Args:
             predictions (tuple): A tuple containing loc preds, conf preds,
@@ -70,11 +70,11 @@ class MultiBoxLoss(nn.Module):
             defaults = priors.data
             match(self.threshold, truths, defaults, self.variance, labels, landms, loc_t, conf_t, landm_t, idx)
         if GPU:
-            loc_t = loc_t.cuda()
-            conf_t = conf_t.cuda()
-            landm_t = landm_t.cuda()
+            loc_t = loc_t.to(device_corr)
+            conf_t = conf_t.to(device_corr)
+            landm_t = landm_t.to(device_corr)
 
-        zeros = torch.tensor(0).cuda()
+        zeros = torch.tensor(0).to(device_corr)
         # landm Loss (Smooth L1)
         # Shape: [batch,num_priors,10]
         pos1 = conf_t > zeros

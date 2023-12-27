@@ -72,10 +72,16 @@ if args.resume_net is not None:
         new_state_dict[name] = v
     net.load_state_dict(new_state_dict)
 
-if num_gpu > 1 and gpu_train:
-    net = torch.nn.DataParallel(net).cuda()
-else:
-    net = net.cuda()
+device_corr = "cuda:2"
+net = torch.nn.DataParallel(net, device_ids=[2, 3])
+net = net.to(device_corr)
+
+# if num_gpu > 1 and gpu_train:
+#     net = torch.nn.DataParallel(net).cuda()
+# else:
+#     print(f"Single GPU training on {device_corr}")
+#     net = net.to(device_corr)
+
 
 cudnn.benchmark = True
 
@@ -86,7 +92,7 @@ criterion = MultiBoxLoss(num_classes, 0.35, True, 0, True, 7, 0.35, False)
 priorbox = PriorBox(cfg, image_size=(img_dim, img_dim))
 with torch.no_grad():
     priors = priorbox.forward()
-    priors = priors.cuda()
+    priors = priors.to(device_corr)
 
 def train():
     net.train()
@@ -122,15 +128,15 @@ def train():
 
         # load train data
         images, targets = next(batch_iterator)
-        images = images.cuda()
-        targets = [anno.cuda() for anno in targets]
+        images = images.to(device_corr)
+        targets = [anno.to(device_corr) for anno in targets]
 
         # forward
         out = net(images)
 
         # backprop
         optimizer.zero_grad()
-        loss_l, loss_c, loss_landm = criterion(out, priors, targets)
+        loss_l, loss_c, loss_landm = criterion(out, priors, targets, device_corr)
         loss = cfg['loc_weight'] * loss_l + loss_c + loss_landm
         loss.backward()
         optimizer.step()
