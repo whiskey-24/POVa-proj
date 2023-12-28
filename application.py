@@ -1,6 +1,7 @@
 import cv2
 import sys
 import numpy as np
+from custom_dataclasess import Vehicle
 
 # Detector
 sys.path.append(f"detector/retinaface/Pytorch_Retinaface")
@@ -17,8 +18,13 @@ class Application:
     def __init__(self, det_backend_type: str, det_model_path: str,
                  det_model_threshold: float, det_use_cpu: bool,
                  match_corner_points: list[list[int]],
-                 map_lat: float, map_lon: float, draw: bool = True):
+                 map_lat: float, map_lon: float, draw: bool = True, debug: bool = False):
         self.draw = draw
+        # Prepare windows opened by application
+        if self.draw:
+            cv2.namedWindow("Map", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("Map", 640, 480)
+        self.debug = debug
 
         self.vehicle_detector = VehicleDetector(det_backend_type,
                                                 det_model_path,
@@ -32,45 +38,51 @@ class Application:
                                                                 y_range=3,
                                                                 stitch=True)
 
-        self.image_matcher = ImageMatcher(draw=True)
+        self.image_matcher = ImageMatcher(draw=self.debug, show=False)
         self.init_corner_points = match_corner_points
 
     def process_frame(self, img: np.ndarray) -> None | np.ndarray:
         if self.draw:
             vehicles, draw_img = self.vehicle_detector.detect_image(img)
-            return draw_img
         else:
             vehicles = self.vehicle_detector.detect_image(img)
+
+        self.image_matcher.load_imgs(self.init_image.get_out_img(), img,
+                                     self.init_corner_points, 0.05)
+        self.image_matcher.process_img(drone_img=self.image_matcher.drone_img)
+
+        if self.draw:
+            self.draw_vehicles_on_map(vehicles)
+            return draw_img
+        else:
             return None
 
-# import math
-# def calculate_angle(center, orientation):
-#     # Calculate the vector from center to orientation
-#     vector_x = orientation[0] - center[0]
-#     vector_y = center[1] - orientation[1]  # Flip the y-coordinates to make 0 degrees represent upward
-#
-#     # Calculate the angle using arctangent
-#     angle_rad = math.atan2(vector_x, vector_y)
-#
-#     # Convert radians to degrees
-#     angle_deg = math.degrees(angle_rad + math.pi * 2)
-#
-#     # Adjust the angle to be in the range [0, 360)
-#     # angle_deg = (angle_deg + 360) % 360
-#     angle_deg = angle_deg % 360
-#
-#     return angle_deg
-#
-# def mouse_callback(event, x, y, flags, param):
-#     if event == cv2.EVENT_LBUTTONDOWN:
-#         image = np.ones((600, 600, 3)) * 255
-#         cv2.circle(image, (300, 300), 5, (0, 0, 0), -1)
-#         cv2.circle(image, (x, y), 5, (0, 0, 0), -1)
-#         cv2.line(image, (300, 300), (x, y), (0, 0, 0), 2)
-#         angle = calculate_angle((300, 300), (x, y))
-#         cv2.putText(image, f"Angle: {angle}", (10, 30),
-#                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-#         cv2.imshow("Application", image)
+    def draw_vehicles_on_map(self, vehicles: list[Vehicle]) -> None:
+        sat_copy = self.init_image.get_out_img().copy()
+        vehicle_colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0),
+                          (255, 255, 0), (0, 255, 255), (255, 0, 255)]
+        for idx, vehicle in enumerate(vehicles):
+            middle_point = [int((vehicle.x1 + vehicle.x2) / 2),
+                            int((vehicle.y1 + vehicle.y2) / 2)]
+            map_point = self.image_matcher.drone_to_sat(middle_point[0],
+                                                        middle_point[1])
+            lat, lon = self.init_image.get_lat_lon_from_xy(map_point[0],
+                                                           map_point[1])
+
+            color_idx = idx % len(vehicle_colors)
+            color = vehicle_colors[color_idx]
+            cv2.circle(sat_copy, map_point, 7, color, -1)
+            cv2.putText(sat_copy, f"Lat: {lat:.4f}", (map_point[0] + 10, map_point[1] + 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            cv2.putText(sat_copy, f"Lon: {lon:.4f}", (map_point[0] + 10, map_point[1] + 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+        cv2.imshow("Map", sat_copy)
+
+
+def mouse_callback(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print(f"({x}, {y})")
+
 
 if __name__ == "__main__":
     # centre = (300, 300)
@@ -102,9 +114,12 @@ if __name__ == "__main__":
     #     if key == ord('q'):
     #         exit(0)
     resize = 1
-    top_left = [599 // resize, 325 // resize]
-    bottom_right = [205 // resize, 251 // resize]
-    bottom_left = [491 // resize, 129 // resize]
+    # top_left = [599 // resize, 325 // resize]
+    # bottom_right = [205 // resize, 251 // resize]
+    # bottom_left = [491 // resize, 129 // resize]
+    top_left = [1238 // resize, 1287 // resize]
+    bottom_right = [871 // resize, 496 // resize]
+    bottom_left = [1524 // resize, 946 // resize]
     super_glue_init = [top_left, bottom_right, bottom_left]
 
     app = Application("resnet50",
@@ -116,6 +131,7 @@ if __name__ == "__main__":
 
     cv2.namedWindow("Application", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Application", 640, 480)
+    cv2.setMouseCallback("Application", mouse_callback)
 
     paused = False
     frame_num = 0
@@ -138,6 +154,9 @@ if __name__ == "__main__":
             cv2.putText(proc_img, f"Frame: {frame_num}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             cv2.imshow("Application", proc_img)
+            # cv2.imshow("Clean frame", frame)
+            # cv2.imshow("Application", app.init_image.get_out_img())
+            # cv2.imshow("Application frame", frame)
 
         # cv2.waitKey(1)
         key = cv2.waitKey(1)

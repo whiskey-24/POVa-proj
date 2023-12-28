@@ -18,7 +18,7 @@ class ImageMatcher:
                  sg_sinkhorn_iterations=20, sg_match_threshold=0.2,
                  sg_force_cpu=False, rc_reproj_threshold=0.001,
                  rc_confidence=0.999999, rc_max_iters=10000,
-                 draw=False, tmp_path="tmp"):
+                 draw=False, tmp_path="tmp", show=True):
         if sg_resize is None:
             sg_resize = [640, 480]
 
@@ -48,6 +48,7 @@ class ImageMatcher:
 
         # Drawing parameters and images
         self.draw = draw
+        self.show = show
         self.sat_img: np.ndarray | None = None
         self.drone_img: np.ndarray | None = None
         self.transformed_sat: np.ndarray | None = None
@@ -241,14 +242,14 @@ class ImageMatcher:
         cv2.imwrite(transformed_path, cv2.cvtColor(self.transformed_sat,
                                                    cv2.COLOR_BGR2GRAY))
 
-        tmp_drone_path = f"{self.tmp_path}_drone.png)"
+        tmp_drone_path = f"{self.tmp_path}_drone.png"
         cv2.imwrite(tmp_drone_path,
                     cv2.cvtColor(drone_img, cv2.COLOR_BGR2GRAY))
 
         self.superpoints_superglue_match(tmp_drone_path, transformed_path)
 
         self.project_matrix, mask = cv2.findHomography(self.mkpts0,
-                                                       self.mkpts1, cv2.RANSAC,
+                                                       self.mkpts1, cv2.USAC_MAGSAC,
                                                        ransacReprojThreshold=self.rc_reproj_threshold,
                                                        confidence=self.rc_confidence,
                                                        maxIters=self.rc_max_iters)
@@ -267,7 +268,24 @@ class ImageMatcher:
                                                 pts=[np.int32(dst)], isClosed=True,
                                                 color=[255, 255, 255], thickness=3,
                                                 lineType=cv2.LINE_AA)
-            self.draw_all_imgs(show=True)
+            self.draw_all_imgs(show=self.show)
+
+    def convert_project_to_transformed(self, x: int, y: int) -> tuple[int, int]:
+        # Convert the x, y coordinates into a homogeneous coordinate
+        transformed_coord = np.array([x, y, 1])
+        # Compute the inverse of the transformation matrix
+        inv_transformed_matrix = np.linalg.pinv(self.project_matrix)
+        # Use the inverse transformation matrix to map the point back to the original image
+        original_coord = np.dot(self.project_matrix, transformed_coord)
+        # Convert back to non-homogeneous coordinates
+        original_coord = original_coord[:2] / original_coord[2]
+        return int(original_coord[0]), int(original_coord[1])
+
+    def drone_to_sat(self, x: int, y: int) -> tuple[int, int]:
+        projected_coords = self.convert_project_to_transformed(x, y)
+        transformed_coords = self.convert_transformed_coord_to_orig(
+            projected_coords[0], projected_coords[1])
+        return transformed_coords
 
 
 # def mouse_callback_from_transf_to_orig(event, x, y, flags, param):
@@ -283,32 +301,38 @@ class ImageMatcher:
 #         print(f"Original coordinates: {original_coord}")
 #
 #
-# def mouse_callback(event, x, y, flags, param):
-#     if event == cv2.EVENT_LBUTTONDOWN:
-#         # Convert the x, y coordinates into a homogeneous coordinate
-#         transformed_coord = np.array([x, y, 1])
-#
-#         # Compute the inverse of the transformation matrix
-#         inv_transformed_matrix = np.linalg.pinv(M)
-#
-#         # Use the inverse transformation matrix to map the point back to the original image
-#         original_coord = np.dot(M, transformed_coord)
-#
-#         # Convert back to non-homogeneous coordinates
-#         original_coord = original_coord[:2] / original_coord[2]
-#         draw = img_2_draw.copy()
-#         cv2.circle(draw, (int(original_coord[0]), int(original_coord[1])),
-#                    5, (0, 0, 255), -1)
-#         cv2.imshow('Draw2', draw)
-#
-#         print(f"Original coordinates: {original_coord}")
+def mouse_callback(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        matcher = param[0]
+        img_2_draw = param[1]
+        win_name = param[2]
+        original_coord = matcher.convert_project_to_transformed(x, y)
+        draw = img_2_draw.copy()
+        cv2.circle(draw, (int(original_coord[0]), int(original_coord[1])),
+                   5, (0, 0, 255), -1)
+        cv2.imshow(win_name, draw)
+
+        print(f"Original coordinates: {original_coord}")
 
 
 if __name__ == '__main__':
-    top_left = [599, 325]
-    bottom_right = [205, 251]
-    bottom_left = [491, 129]
-    matcher = ImageMatcher(draw=True, rc_reproj_threshold=2)
-    matcher.load_imgs("imgs/sat_img.png", "imgs/from_drone.jpg",
+    # top_left = [599, 325]
+    # bottom_right = [205, 251]
+    # bottom_left = [491, 129]
+
+    resize = 1
+    top_left = [1238 // resize, 1287 // resize]
+    bottom_right = [871 // resize, 496 // resize]
+    bottom_left = [1524 // resize, 946 // resize]
+    matcher = ImageMatcher(draw=True, rc_reproj_threshold=10,
+                           rc_max_iters=1000000)
+    # matcher.load_imgs("imgs/sat_img.png", "imgs/from_drone.jpg",
+    #                   [top_left, bottom_right, bottom_left], 0.1)
+    matcher.load_imgs("sat_big.png", "video_400.png",
                       [top_left, bottom_right, bottom_left], 0.1)
+
+    cv2.namedWindow("Drone image", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("Drone image", 840, 640)
+    cv2.setMouseCallback("Drone image", mouse_callback,
+                         param=[matcher, matcher.transformed_sat, "Projection"])
     matcher.process_img(drone_img=matcher.drone_img)
