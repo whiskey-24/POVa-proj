@@ -37,18 +37,30 @@ def mouse_callback(event, x, y, flags, param):
 #     "output_path": "data/retinaface/images",
 #     "dateset_id": 10}
 
+# dataset_config = {
+#     "path_to_dataset": "data/20181029_D9_0900_0930",
+#     "crop_bboxes": [[(1514, 622),
+#                      (2350, 1311)],
+#                     [(616, 0),
+#                      (1542, 610)],
+#                     [(913, 1254),
+#                      (1668, 2009)],
+#                     [(2137, 1183),
+#                      (2685, 1718)]],
+#     "output_path": "data/retinaface2/images",
+#     "dateset_id": 9}
+
 dataset_config = {
-    "path_to_dataset": "data/20181029_D9_0900_0930",
-    "crop_bboxes": [[(1514, 622),
-                     (2350, 1311)],
-                    [(616, 0),
-                     (1542, 610)],
-                    [(913, 1254),
-                     (1668, 2009)],
-                    [(2137, 1183),
-                     (2685, 1718)]],
-    "output_path": "data/retinaface2/images",
-    "dateset_id": 9}
+    "path_to_dataset": "data/20181029_D4_0900_0930",
+    "crop_bboxes": [[(2320, 1228),
+                     (3837, 1655)],
+                    [(2708, 359),
+                     (3808, 626)],
+                    [(22, 1210),
+                     (2400, 1567)]],
+    "output_path": "data/retinaface_eval/images",
+    "dateset_id": 4
+}
 
 
 def sanity_rectangle():
