@@ -35,19 +35,28 @@ Track Association: https://www.mdpi.com/2076-3417/11/9/4046
 
 ## Registration in map
 
-1. [ ] Download and run satellite images extractor
-2. [ ] Evaluate registration based on SIFT/SURF
-3. [ ] Translate any point on source image to point on map (GPS coordinates)
+- [x] Download and run satellite images extractor
+- [x] Evaluate registration based on SIFT/SURF
+- [x] Evaluate registration based on SuperPoint/AdaLAM/SuperGlue
+- [x] Translate any point on source image to point on map (GPS coordinates)
+- [ ] FineTune SuperPoint/RANSAC
+- [ ] Add support for videos
 
 
-4. [ ] Extract road network info from OpenStreetMap
-5. [ ] Segment roads from source images, skeletonize them and match them to
+- [ ] Extract road network info from OpenStreetMap
+- [ ] Segment roads from source images, skeletonize them and match them to
 road network from OpenStreetMap
-6. [ ] Evaluate registration based on road network
+- [ ] Evaluate registration based on road network
 
 
 Satellite images extractor: https://github.com/Jimut123/jimutmap  
 Satellite image registration: https://github.com/satellite-image-deep-learning/techniques#31-image-registration  
-Accessing OSM Data in Python: https://pygis.io/docs/d_access_osm.html  
+Accessing OSM Data in Python: https://pygis.io/docs/d_access_osm.html
+
 SIFT in Opencv: https://docs.opencv.org/4.x/da/df5/tutorial_py_sift_intro.html  
-Scikit-image skeletonize: https://scikit-image.org/docs/dev/auto_examples/edges/plot_skeleton.html  
+SuperPoint: https://github.com/rpautrat/SuperPoint  
+AdaLAM: https://github.com/cavalli1234/AdaLAM  
+SuperGlue: https://github.com/magicleap/SuperGluePretrainedNetwork
+
+Scikit-image skeletonize: https://scikit-image.org/docs/dev/auto_examples/edges/plot_skeleton.html
+
