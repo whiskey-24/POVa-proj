@@ -136,6 +136,7 @@ detector/retinaface/Pytorch_Retinaface/weights/*
 *.zip
 detector/yolov5/*
 detector/retinanet/*
+detector/out/*
 
 # Images
 *.jpg
