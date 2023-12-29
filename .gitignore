@@ -144,6 +144,8 @@ detector/out/*
 *.png
 *.mp4
 
+*.pt
+
 *.info
 *.txt
 
