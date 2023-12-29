@@ -3,7 +3,7 @@ from glob import glob
 from pathlib import Path
 import pandas as pd
 import re
-from convert_to_YOLO_OBB import print_progress_bar
+from convert_to_YOLO_OBB import print_progress_bar, vehicle_dict
 
 
 def mouse_callback(event, x, y, flags, param):
@@ -25,17 +25,17 @@ def mouse_callback(event, x, y, flags, param):
 #     "output_path": "data/retinaface/images",
 #     "dateset_id": 1}
 
-# dataset_config = {
-#     "path_to_dataset": "data/20181029_D10_0900_0930",
-#     "crop_bboxes": [[(2154, 1385),
-#                      (3200, 1709)],
-#                     [(2450, 692),
-#                      (3190, 1269)],
-#                     [(3306, 1014),
-#                      (4080, 1450)]
-#                     ],
-#     "output_path": "data/retinaface/images",
-#     "dateset_id": 10}
+dataset_config = {
+    "path_to_dataset": "data/20181029_D10_0900_0930",
+    "crop_bboxes": [[(2154, 1385),
+                     (3200, 1709)],
+                    [(2450, 692),
+                     (3190, 1269)],
+                    [(3306, 1014),
+                     (4080, 1450)]
+                    ],
+    "output_path": "data/retinaface/images",
+    "dateset_id": 10}
 
 # dataset_config = {
 #     "path_to_dataset": "data/20181029_D9_0900_0930",
@@ -50,17 +50,17 @@ def mouse_callback(event, x, y, flags, param):
 #     "output_path": "data/retinaface2/images",
 #     "dateset_id": 9}
 
-dataset_config = {
-    "path_to_dataset": "data/20181029_D4_0900_0930",
-    "crop_bboxes": [[(2320, 1228),
-                     (3837, 1655)],
-                    [(2708, 359),
-                     (3808, 626)],
-                    [(22, 1210),
-                     (2400, 1567)]],
-    "output_path": "data/retinaface_eval/images",
-    "dateset_id": 4
-}
+# dataset_config = {
+#     "path_to_dataset": "data/20181029_D4_0900_0930",
+#     "crop_bboxes": [[(2320, 1228),
+#                      (3837, 1655)],
+#                     [(2708, 359),
+#                      (3808, 626)],
+#                     [(22, 1210),
+#                      (2400, 1567)]],
+#     "output_path": "data/retinaface_eval/images",
+#     "dateset_id": 4
+# }
 
 
 def sanity_rectangle():
@@ -177,6 +177,7 @@ if __name__ == "__main__":
     # For each file there is a # followed by the path to the file from the path_to_dataset, e.g.: # 00001.jpg
     # Followed by one line for each bounding box in the file, coordinates of their corners and middle point
     out_lines = []
+    out_classes = []
     for idx, frame in enumerate(all_frames):
         print_progress_bar(idx, total_frames, prefix="Progress:",
                            suffix="Complete", length=50)
@@ -251,6 +252,7 @@ if __name__ == "__main__":
                 sub_img)
 
             out_lines.append(f"# {out_file_name}")
+            out_classes.append(f"# {out_file_name}")
             for _, row in crop_sub_annots[idx].iterrows():
                 upper_left = (min(row['x1'], row['x2'], row['x3'], row['x4']),
                               min(row['y1'], row['y2'], row['y3'], row['y4']))
@@ -271,6 +273,7 @@ if __name__ == "__main__":
                                  f"{row['x3']} {row['y3']} 0.0 "
                                  f"{row['x4']} {row['y4']} 0.0 "
                                  f"{middle_point[0]} {middle_point[1]} ")
+                out_classes.append(f"{vehicle_dict[row['Type']]}")
 
     final_line = "\n".join(out_lines)
     label_file = Path(dataset_config["output_path"]).parent / "label.txt"
@@ -278,4 +281,12 @@ if __name__ == "__main__":
         final_line = "\n" + final_line
     with open(label_file, "a") as f:
         f.write(final_line)
-    print("\nDone!")
+    print("\nDone writing label file!")
+
+    final_classes = "\n".join(out_classes)
+    classes_file = Path(dataset_config["output_path"]).parent / "classes.txt"
+    if classes_file.exists():
+        final_classes = "\n" + final_classes
+    with open(classes_file, "a") as f:
+        f.write(final_classes)
+    print("Done writing classes file!")
