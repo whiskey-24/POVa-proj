@@ -24,3 +24,4 @@ zip:
 	find detector/yolov8 detector/misc detector/retinaface/Pytorch_Retinaface -type f ! -name "*.pth" ! -name "*.pt" ! -name "*.zip" -print | zip $(ARCHIVE_NAME) -@
 	find detector/retinaface/evaluate_retinaface.py -type f -print | zip $(ARCHIVE_NAME) -@
 	find map_reg/ -type f ! -name "*.jpg" ! -name "*.jpeg" ! -name "*.png" ! -name "*.mp4" ! -name "*.pt" ! -name "*.info" ! -name "*.txt" ! -name "*.pth" -print | zip $(ARCHIVE_NAME) -@
+	find tracker/ -type f ! -name "*.mp4" ! -name "*.txt" -print | zip $(ARCHIVE_NAME) -@
