@@ -25,3 +25,4 @@ zip:
 	find detector/retinaface/evaluate_retinaface.py -type f -print | zip $(ARCHIVE_NAME) -@
 	find map_reg/ -type f ! -name "*.jpg" ! -name "*.jpeg" ! -name "*.png" ! -name "*.mp4" ! -name "*.pt" ! -name "*.info" ! -name "*.txt" ! -name "*.pth" -print | zip $(ARCHIVE_NAME) -@
 	find tracker/ -type f ! -name "*.mp4" ! -name "*.txt" -print | zip $(ARCHIVE_NAME) -@
+	find team_xvisku01_doc.pdf requirements.txt Makefile application.py custom_dataclasess.py README.md work_todos.md -type f -print | zip $(ARCHIVE_NAME) -@
