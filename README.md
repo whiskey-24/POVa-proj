@@ -10,6 +10,10 @@ Project consists of three main parts:
 
 Each part was developed independently and can be used separately.
 
+### GitHub link
+
+https://github.com/whiskey-24/POVa-proj
+
 ### Project structure
 
 Detection part:
