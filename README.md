@@ -27,6 +27,7 @@ along with corresponding annotations
 - - `*.yaml` - configuration files for training and testing
 - - `train_yolo.py` - training script
 - - `test_yolo.py` - testing script
+- - `merge_datasets.sh` - script for merging multiple YOLO format datasets into one
 - `retinaface` - RetinaFace implementation based on https://github.com/biubug6/Pytorch_Retinaface
 - - `evaluate_retinaface.py` - evaluation script
 - - `Pytorch_Retinaface` - RetinaFace implementation cloned from github. Only changed

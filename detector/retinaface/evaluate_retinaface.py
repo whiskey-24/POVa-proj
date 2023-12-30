@@ -4,11 +4,11 @@ from glob import glob
 import pandas as pd
 from pathlib import Path
 import pickle
-from convert_to_YOLO_OBB import print_progress_bar
+from detector.misc.convert_to_YOLO_OBB import print_progress_bar
 from dataclasses import dataclass, field
 import matplotlib.pyplot as plt
 
-sys.path.append(f"retinaface/Pytorch_Retinaface")
+sys.path.append(f"Pytorch_Retinaface")
 from retinaface.Pytorch_Retinaface.detect import VehicleDetector, Vehicle
 
 dataset_config = {

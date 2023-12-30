@@ -28,7 +28,7 @@ def print_progress_bar(iteration, total, prefix='', suffix='', length=30, fill='
 
 
 if __name__ == "__main__":
-    base_dir = Path("data/20181029_D1_0900_0930/20181029_D1_0900_0930")
+    base_dir = Path("../data/20181029_D1_0900_0930/20181029_D1_0900_0930")
     base_frames = base_dir / "Frames"
     base_annotations = base_dir / "Annotations"
     yolo_dirs = {"base_dir": base_dir.parent / "yolo",
