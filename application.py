@@ -134,6 +134,8 @@ class Application:
                 map_end_point = self.image_matcher.drone_to_sat(trajectory.positions[idx][0],trajectory.positions[idx][1])  
 
                 cv2.line(sat_copy, map_start_point, map_end_point, color, 15)
+                
+            cv2.putText(sat_copy, f"{track_id_int}", (map_start_point[0] + 10, map_start_point[1] + 10),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
         cv2.imshow("Trajectories", sat_copy)
 
