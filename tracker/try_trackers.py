@@ -18,7 +18,7 @@ from pathlib import Path
 def main():
 
     parser = argparse.ArgumentParser(description='Run different versions of Deep SORT.')
-    parser.add_argument('--version', type=int, choices=[1, 2, 3], help='1 for standard Deep SORT, 2 for Deep SORT Real Time from ground truth dataset (ideal detector), 3 for Deep SORT Real Time from our detector')
+    parser.add_argument('--version', type=int, choices=[1, 2, 3], help='1 for standard Deep SORT, 2 for Deep SORT Real Time, 3 for GT data')
 
     args = parser.parse_args()
 

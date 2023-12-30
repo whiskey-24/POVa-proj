@@ -152,3 +152,4 @@ detector/retinaface/training.csv
 *.info
 *.txt
 
+.DS_Store
