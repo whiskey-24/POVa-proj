@@ -37,6 +37,13 @@ multi GPU training.
 - `p_neuma` - scripts for manipulating p_neuma dataset. Cloned from https://github.com/shgold/pNEUMA-Vision-toolbox  
 
 Tracking part:
+- `src` 
+-- `deep_sort_rt.py` - integrates DeepSort real time for evaluation on p_neuma
+-- `deep_sort.py` - integrates DeepSort for evaluation on p_neuma
+-- `strong_sort.py` - integrates StrongSort for evaluation on p_neuma
+-- `utils_tracker` - various functions for manipulating with p_neuma dataset
+-- `vehicle.py` - vehicle detection and tracking classes for tracking evaluation
+- `try_trackers.py` - showcases the use of different trackers and evaluates them
 
 Map registration part:
 - `satellite_extractor` - satellite images extractor based on https://github.com/Jimut123/jimutmap
