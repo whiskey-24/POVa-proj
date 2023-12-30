@@ -136,12 +136,18 @@ detector/retinaface/Pytorch_Retinaface/weights/*
 *.zip
 detector/yolov5/*
 detector/retinanet/*
+detector/out/*
+detector/retinaface/plot_training.py
+detector/retinaface/training.csv
+*.pdf
 
 # Images
 *.jpg
 *.jpeg
 *.png
 *.mp4
+
+*.pt
 
 *.info
 *.txt

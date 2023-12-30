@@ -29,7 +29,7 @@ vehicle_to_color = {
     'Heavy Vehicle': (255, 0, 255),  # Heavy Vehicle
 }
 
-model = YOLO('runs/detect/train8/weights/best.pt')
+model = YOLO('/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/runs/detect/train/weights/best.pt')
 
 cv2.namedWindow("test", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("test", 640, 480)
@@ -51,9 +51,21 @@ if False:
                 first_frame = False
                 paused = True
             results = model(frame)  # Show the results
+            # for r in results:
+            #     im_array = r.plot()  # plot a BGR numpy array of predictions
+            #     cv2.imshow("test", im_array)
             for r in results:
-                im_array = r.plot()  # plot a BGR numpy array of predictions
-                cv2.imshow("test", im_array)
+                boxes = r.boxes.cpu()
+                boxes_coords = boxes.xyxy.numpy()
+                boxes_scores = boxes.conf.numpy()
+                boxes_cls = boxes.cls.numpy()
+                for idx, box in enumerate(boxes_coords):
+                    box = box.astype(int)
+                    box_color = vehicle_to_color[
+                        vehicle_dict[int(boxes_cls[idx])]]
+                    cv2.rectangle(frame, (box[0], box[1]),
+                                  (box[2], box[3]), box_color, 2)
+                cv2.imshow("test", frame)
         key = cv2.waitKey(1)
         if key == ord('q'):
             break
@@ -62,9 +74,17 @@ if False:
         elif key == ord(" "):
             paused = not paused
 else:
-    img_path = "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/20181029_D10_0900_0930/Frames/00001.jpg"
+    # img_path = "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/20181029_D10_0900_0930/Frames/00001.jpg"
+    img_path = "/home/whiskey/Documents/2Mit/POVa/POVa-proj/detector/data/retinaface_eval/images/00001.jpg"
+    crop_bboxes = [[(2320, 1228),
+                     (3837, 1655)],
+                    [(2708, 359),
+                     (3808, 626)],
+                    [(22, 1210),
+                     (2400, 1567)]]
     frame = cv2.imread(img_path)
-    results = model(frame)  # Show the results
+    new_frame = frame[crop_bboxes[0][0][1]:crop_bboxes[0][1][1], crop_bboxes[0][0][0]:crop_bboxes[0][1][0]]
+    results = model(new_frame)  # Show the results
     for r in results:
         boxes = r.boxes.cpu()
         boxes_coords = boxes.xyxy.numpy()
@@ -73,8 +93,8 @@ else:
         for idx, box in enumerate(boxes_coords):
             box = box.astype(int)
             box_color = vehicle_to_color[vehicle_dict[int(boxes_cls[idx])]]
-            cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), box_color, 2)
-        cv2.imshow("test", frame)
+            cv2.rectangle(new_frame, (box[0], box[1]), (box[2], box[3]), box_color, 2)
+        cv2.imshow("test", new_frame)
 
     while True:
         key = cv2.waitKey(0)

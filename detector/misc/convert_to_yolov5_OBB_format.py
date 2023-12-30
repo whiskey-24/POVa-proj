@@ -11,7 +11,7 @@ vehicle_dict = {  # class_id : type
 }
 
 if __name__ == "__main__":
-    path_to_old_labels = "data/20181029_D1_0900_0930/yolo/train/labels_old"
+    path_to_old_labels = "../data/20181029_D1_0900_0930/yolo/train/labels_old"
     path_to_new_labels = Path(path_to_old_labels).parent / "labels"
     path_to_new_labels.mkdir(parents=True, exist_ok=True)
 

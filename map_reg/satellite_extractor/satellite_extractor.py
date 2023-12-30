@@ -50,6 +50,11 @@ class TiledImage:
             self.__out_img = cv2.hconcat(out_horizontal_tiles)
         return self.__out_img
 
+    def get_out_img(self) -> np.ndarray:
+        if self.__out_img is None:
+            self.stitch()
+        return self.__out_img
+
     def get_lat_lon_from_xy(self, x_coord: int, y_coord: int) -> tuple[float, float]:
         if self.__out_img is None:
             self.stitch()

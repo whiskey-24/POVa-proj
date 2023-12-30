@@ -12,6 +12,9 @@ from models.retinaface import RetinaFace
 from utils.box_utils import decode, decode_landm
 import time
 from dataclasses import dataclass
+from custom_dataclasess import Vehicle
+import math
+
 
 # parser = argparse.ArgumentParser(description='Retinaface')
 #
@@ -28,14 +31,22 @@ from dataclasses import dataclass
 # parser.add_argument('-s', '--save_image', action="store_true", default=True, help='show detection results')
 # parser.add_argument('--vis_thres', default=0.6, type=float, help='visualization_threshold')
 # args = parser.parse_args()
-@dataclass
-class Vehicle:
-    x1: int
-    y1: int
-    x2: int
-    y2: int
-    score: float
-    landmarks: list
+def calculate_angle(center, orientation):
+    # Calculate the vector from center to orientation
+    vector_x = orientation[0] - center[0]
+    vector_y = center[1] - orientation[1]  # Flip the y-coordinates to make 0 degrees represent upward
+
+    # Calculate the angle using arctangent
+    angle_rad = math.atan2(vector_x, vector_y)
+
+    # Convert radians to degrees
+    angle_deg = math.degrees(angle_rad + math.pi * 2)
+
+    # Adjust the angle to be in the range [0, 360)
+    # angle_deg = (angle_deg + 360) % 360
+    angle_deg = angle_deg % 360
+
+    return angle_deg
 
 
 class VehicleDetector:
@@ -154,7 +165,20 @@ class VehicleDetector:
                 cv2.circle(img_raw, (b[13], b[14]), 1, (255, 255, 255), 4)
                 landmarks = [(b[5], b[6]), (b[7], b[8]), (b[9], b[10]),
                              (b[11], b[12]), (b[13], b[14])]
-                faces.append(Vehicle(b[0], b[1], b[2], b[3], b[4], landmarks))
+                centre_x = (b[0] + b[2]) / 2
+                centre_y = (b[1] + b[3]) / 2
+                orientation_x = (b[9] + b[11]) / 2
+                orientation_y = (b[10] + b[12]) / 2
+                angle = calculate_angle((centre_x, centre_y),
+                                        (orientation_x, orientation_y))
+
+                # Draw a pink line from centre in direction of orientation (based on angle) that has length max(width, height)
+                length = max(b[2] - b[0], b[3] - b[1])
+                P2x = int(round(centre_x + length * math.cos(math.radians(angle) - math.pi / 2)))
+                P2y = int(round(centre_y + length * math.sin(math.radians(angle) - math.pi / 2)))
+                cv2.line(img_raw, (int(centre_x), int(centre_y)), (P2x, P2y), (255, 0, 255), 2)
+
+                faces.append(Vehicle(b[0], b[1], b[2], b[3], b[4], landmarks, angle))
             # save image
 
             return faces, img_raw
@@ -164,7 +188,13 @@ class VehicleDetector:
                     continue
                 landmarks = [(b[5], b[6]), (b[7], b[8]), (b[9], b[10]),
                              (b[11], b[12]), (b[13], b[14])]
-                faces.append(Vehicle(b[0], b[1], b[2], b[3], b[4], landmarks))
+                centre_x = (b[0] + b[2]) / 2
+                centre_y = (b[1] + b[3]) / 2
+                orientation_x = (b[9] + b[11]) / 2
+                orientation_y = (b[10] + b[12]) / 2
+                angle = calculate_angle((centre_x, centre_y),
+                                        (orientation_x, orientation_y))
+                faces.append(Vehicle(b[0], b[1], b[2], b[3], b[4], landmarks, angle))
             return faces
 
     def detect_path(self, path_to_img: str) -> list[Vehicle] | tuple[list[Vehicle], np.ndarray]:
