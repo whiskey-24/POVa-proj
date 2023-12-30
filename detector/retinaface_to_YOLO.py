@@ -61,7 +61,11 @@ if __name__ == "__main__":
                 annot_id = 0
             else:
                 annot_class = int(line.strip())
-                annotations[img_name][annot_id].append(annot_class)
+                try:
+                    annotations[img_name][annot_id].append(annot_class)
+                except KeyError:
+                    print(f"KeyError: {img_name}")
+                    continue
                 annot_id += 1
 
         print("\nLoaded!")
